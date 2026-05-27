@@ -2,8 +2,9 @@
 import React from 'react';
 
 export default function FloatingSupport() {
-  const phoneNumber = "13252024023"; // شماره شما
-  const telegramLink = "@Sultan7991384"; // لینک تلگرام شما
+  // لینک‌های اختصاصی سلطان آنلاین سرویس
+  const telegramLink = "https://t.me/sultan_tech799"; 
+  const whatsappGroupLink = "https://chat.whatsapp.com/LtKeqTfv8m6Lg0oJJpWR6z"; 
 
   return (
     <div className="fixed bottom-6 right-6 z-[9999] flex flex-col gap-3">
@@ -20,9 +21,9 @@ export default function FloatingSupport() {
         </svg>
       </a>
 
-      {/* دکمه واتس‌اپ (آیکون رسمی) */}
+      {/* دکمه واتس‌اپ (آیکون رسمی متصل به لینک گروه) */}
       <a 
-        href={`https://wa.me/${phoneNumber}`}
+        href={whatsappGroupLink}
         target="_blank"
         rel="noopener noreferrer"
         className="w-12 h-12 bg-[#25D366] rounded-full flex items-center justify-center text-white shadow-lg hover:scale-105 transition-all hover:shadow-[0_0_15px_rgba(37,211,102,0.5)]"

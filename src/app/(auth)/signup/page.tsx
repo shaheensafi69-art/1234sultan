@@ -3,9 +3,8 @@ import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-// این را در فایل‌های خود جایگزین کنید:
-import { createClient } from '@/utils/supabase/client'; // مسیر یکپارچه با صفحه لاگین
-import { User, Mail, Lock, Phone, Globe, Calendar, Eye, EyeOff, Loader2, Camera, ShieldCheck, ArrowRight } from 'lucide-react';
+import { createClient } from '@/utils/supabase/client'; 
+import { User, Camera, Loader2, ArrowRight } from 'lucide-react';
 
 const supabase = createClient();
 
@@ -16,51 +15,35 @@ export default function SignupPage() {
   const [phone, setPhone] = useState('');
   const [country, setCountry] = useState('');
   const [dob, setDob] = useState('');
-  const [avatarUrl, setAvatarUrl] = useState(''); 
-  const [showPassword, setShowPassword] = useState(false);
+  
+  // تغییرات جدید: ذخیره فایل خام و پیش‌نمایش به جای آپلود مستقیم
+  const [avatarFile, setAvatarFile] = useState<File | null>(null); 
+  const [avatarPreview, setAvatarPreview] = useState(''); 
+  
   const [loading, setLoading] = useState(false);
-  const [uploading, setUploading] = useState(false); 
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
-  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // فقط عکس را می‌گیریم و به صورت لوکال نشان می‌دهیم (بدون ارسال به سرور)
+  const handleAvatarSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
     setErrorMsg('');
     
-    try {
-      setUploading(true);
-      const file = e.target.files[0];
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random()}.${fileExt}`;
-      const filePath = `avatars/${fileName}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(filePath, file);
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(filePath);
-
-      setAvatarUrl(publicUrl);
-    } catch (error: any) {
-      setErrorMsg("خطا در آپلود: " + error.message);
-    } finally {
-      setUploading(false);
-    }
+    const file = e.target.files[0];
+    setAvatarFile(file); // ذخیره فایل برای زمان ثبت‌نام
+    setAvatarPreview(URL.createObjectURL(file)); // ساخت یک لینک موقت برای نمایش به کاربر
   };
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setErrorMsg('');
+    setSuccessMsg('');
 
-    if (!avatarUrl) {
+    if (!avatarFile) {
       setErrorMsg("آپلود عکس پروفایل الزامی است!");
       setLoading(false);
       return;
@@ -71,6 +54,7 @@ export default function SignupPage() {
     const lastName = nameParts.slice(1).join(' ') || '';
 
     try {
+      // ۱. ابتدا کاربر را ثبت‌نام می‌کنیم
       const { data: authData, error: authError } = await supabase.auth.signUp({ 
         email, 
         password,
@@ -80,6 +64,24 @@ export default function SignupPage() {
       if (authError) throw authError;
 
       if (authData.user) {
+        // ۲. حالا که کاربر لاگین شد و هویت دارد، عکس را آپلود می‌کنیم
+        const fileExt = avatarFile.name.split('.').pop();
+        // برای جلوگیری از تداخل، اسم عکس را با آیدی کاربر ترکیب می‌کنیم
+        const fileName = `${authData.user.id}-${Math.random()}.${fileExt}`;
+        const filePath = `avatars/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('avatars') // نام باکت شما (باید با نام باکت در سوپابیس یکی باشد)
+          .upload(filePath, avatarFile);
+
+        if (uploadError) throw new Error("خطا در آپلود عکس: " + uploadError.message);
+
+        // ۳. گرفتن لینک عمومی عکس
+        const { data: { publicUrl } } = supabase.storage
+          .from('avatars')
+          .getPublicUrl(filePath);
+
+        // ۴. در نهایت، اطلاعات را در جدول پروفایل ذخیره می‌کنیم
         const { error: profileError } = await supabase
           .from('profiles')
           .insert([{
@@ -90,7 +92,7 @@ export default function SignupPage() {
             phone: phone,
             country: country,
             date_of_birth: dob,
-            avatar_url: avatarUrl,
+            avatar_url: publicUrl, // لینک دائمی عکس
             balance: 0
           }]);
 
@@ -125,15 +127,29 @@ export default function SignupPage() {
             <h2 className="text-lg font-black text-slate-800 uppercase">Create Empire Node</h2>
           </div>
           
-          {/* Avatar Upload */}
+          {/* Avatar Preview */}
           <div className="flex flex-col items-center mb-6">
             <div className="relative w-24 h-24 bg-slate-100 rounded-full overflow-hidden border-2 border-blue-100 flex items-center justify-center mb-3">
-              {avatarUrl ? <img src={avatarUrl} className="w-full h-full object-cover" /> : <User className="text-slate-400" size={32} />}
+              {avatarPreview ? (
+                <img src={avatarPreview} className="w-full h-full object-cover" />
+              ) : (
+                <User className="text-slate-400" size={32} />
+              )}
             </div>
-            <button type="button" onClick={() => fileInputRef.current?.click()} className="text-blue-600 text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
-              <Camera size={14} /> {uploading ? "Uploading..." : "Upload Identity Image"}
+            <button 
+              type="button" 
+              onClick={() => fileInputRef.current?.click()} 
+              className="text-blue-600 text-[10px] font-black uppercase tracking-widest flex items-center gap-2"
+            >
+              <Camera size={14} /> Upload Identity Image
             </button>
-            <input type="file" ref={fileInputRef} onChange={handleAvatarUpload} className="hidden" />
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              onChange={handleAvatarSelect} 
+              className="hidden" 
+              accept="image/*"
+            />
           </div>
 
           <form onSubmit={handleSignup} className="space-y-4">
@@ -146,14 +162,15 @@ export default function SignupPage() {
             </div>
 
             <input type="email" placeholder="Email Address" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold outline-none" required />
-            <input type="password" placeholder="Secure Password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold outline-none" required />
+            <input type="password" placeholder="Secure Password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold outline-none" required minLength={6} />
 
-            <button disabled={loading} className="w-full bg-blue-600 text-white py-3.5 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-blue-700 flex items-center justify-center gap-2 mt-4 transition-all">
+            <button disabled={loading} className="w-full bg-blue-600 text-white py-3.5 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-blue-700 flex items-center justify-center gap-2 mt-4 transition-all disabled:opacity-50">
               {loading ? <Loader2 className="animate-spin" size={16} /> : <>Join the Empire <ArrowRight size={16} /></>}
             </button>
           </form>
 
           {errorMsg && <p className="text-red-500 text-[10px] font-bold mt-4 text-center">{errorMsg}</p>}
+          {successMsg && <p className="text-emerald-500 text-[10px] font-bold mt-4 text-center">{successMsg}</p>}
         </div>
       </div>
     </div>

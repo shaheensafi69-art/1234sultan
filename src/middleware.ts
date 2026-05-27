@@ -8,9 +8,8 @@ export async function middleware(request: NextRequest) {
 
   const path = request.nextUrl.pathname;
 
-  // ۱. اجازه عام و تام به تمام ویب‌هوک‌های پرداختی (Stripe و NOWPayments)
-  // این مسیرها هرگز نباید بلاک شوند تا تراکنش‌ها در دیتابیس ثبت شوند
-  if (path.startsWith('/api/webhooks') || path.startsWith('/api/integration')) {
+  // ۱. ویب‌هوک‌ها و فایل‌های عمومی (بسیار حیاتی)
+  if (path.startsWith('/api/webhooks') || path.startsWith('/api/integration') || path.startsWith('/api/support')) {
     return response;
   }
 
@@ -35,41 +34,39 @@ export async function middleware(request: NextRequest) {
   // دریافت وضعیت نشست کاربر
   const { data: { session } } = await supabase.auth.getSession()
 
-  // ۲. اصلاح ریدایرکت صفحه اصلی (Sultan Online Service)
-  // اگر کاربر صفحه اصلی را باز کرد، اگر لاگین بود برود داشبورد، وگرنه برود صفحه لاگین
-  if (path === '/') {
-    if (session) {
-      return NextResponse.redirect(new URL('/dashboard', request.url))
-    } else {
-      return NextResponse.redirect(new URL('/login', request.url))
-    }
-  }
+  // ۲. تعریف صفحات عمومی (صفحاتی که همه می‌توانند ببینند)
+  // اضافه کردن '/' به این لیست باعث می‌شود اولین چیزی که کاربر می‌بیند صفحه اصلی باشد
+  const publicPaths = ['/', '/services', '/contact', '/about', '/privacy', '/terms'];
+  const isPublicPage = publicPaths.includes(path) || path.startsWith('/products');
 
-  // تعریف صفحات عمومی و صفحات احراز هویت
-  const isPublicPage = path === '/services' || path.startsWith('/products');
+  // ۳. تعریف صفحات احراز هویت
   const isAuthPage = path === '/login' || path === '/signup' || path === '/forgot-password';
 
-  // ۳. هدایت مشتری لاگین نشده به صفحه لاگین
-  if (!session && !isPublicPage && !isAuthPage) {
-    const loginUrl = new URL('/login', request.url);
-    // ذخیره آدرس فعلی برای اینکه بعد از لاگین مشتری دوباره به همینجا برگردد
-    loginUrl.searchParams.set('next', path); 
-    return NextResponse.redirect(loginUrl);
-  }
-
-  // اگر کاربر لاگین بود و خواست به صفحه لاگین برود، بفرستش به داشبورد اصلی سلطان
+  // ۴. منطق ریدایرکت هوشمند:
+  
+  // الف) اگر کاربر لاگین کرده و بخواهد به صفحه لاگین/ثبت‌نام برود -> بفرستش به داشبورد
   if (session && isAuthPage) {
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
+  // ب) اگر کاربر لاگین نکرده و بخواهد صفحات خصوصی (مثل داشبورد یا کیف پول) را ببیند
+  // فقط در این حالت او را به لاگین می‌فرستیم
+  if (!session && !isPublicPage && !isAuthPage) {
+    const loginUrl = new URL('/login', request.url);
+    loginUrl.searchParams.set('next', path); // ذخیره مسیر فعلی برای بازگشت بعد از لاگین
+    return NextResponse.redirect(loginUrl);
+  }
+
+  // ج) در تمام موارد دیگر (مثلاً مشاهده صفحه اصلی یا سرویس‌ها در حالت لاگین نشده)
+  // اجازه بده کاربر صفحه را ببیند
   return response
 }
 
 export const config = {
   matcher: [
     /*
-     * تطبیق تمام مسیرها به جز موارد استاتیک و ویب‌هوک‌ها
+     * تطبیق تمام مسیرها به جز موارد استاتیک
      */
-    '/((?!_next/static|_next/image|api/webhooks|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }
