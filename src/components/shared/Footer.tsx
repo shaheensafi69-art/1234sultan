@@ -33,14 +33,17 @@ export default function Footer() {
             Leading digital infrastructure and SMM solutions for elite growth. Accelerate your global presence with the most reliable network.
           </p>
           <div className="flex items-center gap-4 pt-2">
-             <a href="#" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-400 hover:text-blue-400 hover:bg-blue-900/30 hover:border-blue-500/50 transition-all shadow-inner">
+             {/* لینک فیسبوک */}
+             <a href="https://www.facebook.com/share/1F1NJPStmY/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-400 hover:text-blue-500 hover:bg-blue-900/30 hover:border-blue-500/50 transition-all shadow-inner">
               <Facebook size={18} />
             </a>
-            <a href="#" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-400 hover:text-blue-400 hover:bg-blue-900/30 hover:border-blue-500/50 transition-all shadow-inner">
+            {/* لینک اینستاگرام */}
+            <a href="https://www.instagram.com/sultan_online_services?igsh=eXd1cHlsdnlmZm84&utm_source=qr" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-400 hover:text-pink-500 hover:bg-pink-900/30 hover:border-pink-500/50 transition-all shadow-inner">
               <Instagram size={18} />
             </a>
-            <a href="#" className="w-10 h-10 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-400 hover:text-blue-400 hover:bg-blue-900/30 hover:border-blue-500/50 transition-all shadow-inner">
-              <Send size={18} className="ml-[-2px] mt-[2px]" />
+            {/* لینک تلگرام */}
+            <a href="https://t.me/sultan_tech799" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-400 hover:text-sky-500 hover:bg-sky-900/30 hover:border-sky-500/50 transition-all shadow-inner">
+              <Send size={18} />
             </a>
           </div>
         </div>
@@ -66,7 +69,7 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* ستون سوم: اطلاعات شرکتی (VIP) - دیتای رسمی ثبت شده */}
+        {/* ستون سوم: اطلاعات شرکتی */}
         <div>
           <h4 className="font-black text-white mb-6 uppercase tracking-[0.2em] text-[11px] flex items-center gap-2">
             <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span> Corporate
@@ -84,8 +87,7 @@ export default function Footer() {
               <MapPin size={18} className="text-slate-500 mt-0.5 shrink-0" />
               <p className="text-xs text-slate-400 font-medium leading-relaxed">
                 Kotai Sangi Yaseeni Center<br />
-                Kabul Afghanistan<br />
-                   
+                Kabul Afghanistan
               </p>
             </div>
           </div>
@@ -111,7 +113,6 @@ export default function Footer() {
             </button>
           </div>
         </div>
-
       </div>
 
       {/* بخش کپی‌رایت پایین */}
